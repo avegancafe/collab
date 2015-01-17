@@ -12,8 +12,8 @@ cur_hash = urllib2.urlopen("localhost:3000/newhash").read()
 SIO = SocketIO('localhost', 3000)
 SIO.define(BaseNamespace, '/'+cur_hash)
 
-vim.command("let s:pending = []")
-vim.command("let s:approved = []")
+vim.command("let s:pending = {}")
+vim.command("let s:approved = {}")
 
 
 EOF
@@ -40,6 +40,14 @@ EOF
 
 function! Approve(name) {
 python << EOF
+cur_pending = vim.eval("s:pending")
+del cur_pending[name]
+
+vim.command("let s:pending = %s"%str(cur_pending))
+
+cur_approved = vim.eval("s:approved")
+cur_approved[name] = 1
+vim.command("let s:approved = %s"%str(cur_approved))
 
 EOF
 }
