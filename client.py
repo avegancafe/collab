@@ -6,5 +6,5 @@ from socketIO_client import SocketIO
 
 SIO = SocketIO('localhost', 3000)
 
-SIO.emit('aaa')
+SIO.emit('event', {"name": "Hello!"})
 

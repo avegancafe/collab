@@ -15,6 +15,6 @@ io.on('connection', function (socket) {
     console.log('new user conencted');
     socket.on('event', function (data) {
         console.log('aaa');
-        console.log(data);
+        console.log(data.name);
     });
 });

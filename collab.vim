@@ -1,4 +1,4 @@
-function! init() {
+function! Init() {
 
 python << EOF
 import vim, urllib2
