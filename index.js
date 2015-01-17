@@ -13,6 +13,7 @@ io = sio.listen(server)
 
 io.on('connection', function (socket) {
     console.log('new user conencted');
+    socket.emit('send', {'a': 100, 'b': 200})
     socket.on('event', function (data) {
         console.log('aaa');
         console.log(data.name);
