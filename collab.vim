@@ -18,3 +18,15 @@ vim.command("let s:approved = []")
 
 EOF
 }
+
+function! Connect(hash) {
+python << EOF
+
+EOF
+}
+
+function! Approve(name) {
+python << EOF
+
+EOF
+}
