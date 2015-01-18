@@ -104,6 +104,7 @@ class CollabScope(object):
         elif command == "connect":
             if arg1 and arg2 and arg3:
                 self.initiate(arg1, arg2, arg3)
+		print 'Connection successfully joined...'
             else:
                 print "You must designate an address, port, and name."
         elif command == "quit":
