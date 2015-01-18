@@ -21,7 +21,7 @@ class CollabProtocol(Protocol):
         self.transport.write(change)
     
     def data_received(self, data_string):
-        packet = json.loads(data_string)
+    	packet = json.loads(data_string)
         data = packet['data']
         if packet['name'] != Collab.name and 'change_type' in packet.keys():
             if packet['change_type'] == "update_line":
@@ -39,7 +39,7 @@ class CollabProtocol(Protocol):
 class CollabFactory(ClientFactory):
     ''' Twisted Factory for Collab '''
     def buildProtocol(self, addr):
-        self.p = CollabProtocol()
+        self.p = CollabProtocol(self)
         return self.p
     
     def start_factory(self):
@@ -81,6 +81,7 @@ class CollabScope(object):
             print "You are already connected"
             return
         port = int(port)
+	addr = str(addr)
         if not hasattr(self, 'connection'):
             self.addr = addr
             self.port = port
@@ -97,6 +98,7 @@ class CollabScope(object):
         if command == "start":
             if arg1 and arg2:
                 self.start_server(arg1, arg2)
+		print 'Connection successful...'
             else:
                 print "You must designate a port and name."
         elif command == "connect":
@@ -113,7 +115,7 @@ class CollabScope(object):
             docs for details."
 
     def start_server(self, port, name):
-        vim.command(':silent execute "!'+CoVimServerPath+\
+    	vim.command(':silent execute "!'+CoVimServerPath+\
         ' '+port+' &>/dev/null &"')
         from time import sleep
         sleep(1)
