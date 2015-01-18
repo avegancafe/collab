@@ -40,7 +40,7 @@ class React(Protocol):
                 self.factory.buff = self.factory.buff[:data['data']['line_num']] + \
                         [data['data']['new_line'].encode(),] + self.factory.buff[data['data']['line_num']:]
             elif data['change_type'] == 'update_line':
-                sleep(0.5)
+                sleep(0.05)
                 self.factory.buff[data['data']['line_num']] = data['data']['updated_line']
             elif data['change_type'] == 'delete_line':
                 del self.factory.buff[data['data']['line_to_remove']]
