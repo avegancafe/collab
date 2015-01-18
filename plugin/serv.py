@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 ''' The server for collab.vim '''
 
 import json, argparse
@@ -55,15 +55,15 @@ class React(Protocol):
             if USERS:
                 d['data']['buffer'] = self.factory.buff
             USERS[data['name']] = self
-        else:
+    	elif 'change_type' in data:
             d = {
                     "name": data['name'],
                     "packet_type": "update",
                     "change_type": data['change_type'],
                     "data": data['data']
                 } 
-        print(d)
-        print(data)
+        # print(d)
+	# print(data)
 
         for user in USERS.keys():
             if user != data['name']:
