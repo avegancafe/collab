@@ -57,7 +57,7 @@ class CollabProtocol(Protocol):
                 vim.current.buffer[packet['data']['line_num']] = to_utf8(packet['data']['updated_line'])
             elif packet['change_type'] == "add_line":
                 if data['line_num'] < vim.current.window.cursor[0]-1:
-                    vim.current.window.cursor[0] += 1
+                    vim.current.window.cursor = (vim.current.window.cursor[0]+1, vim.current.window.cursor[1])
                 Collab.buff = vim.current.buffer[:packet['data']['line_num']-1] + \
                         [to_utf8(packet['data']['prev_line']), to_utf8(packet['data']['new_line'])] + \
                         vim.current.buffer[packet['data']['line_num']:]
