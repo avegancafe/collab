@@ -21,6 +21,4 @@ class React(Protocol):
     def data_received(self, data):
         if data['name'] not in users:
             users.add(data['name'])
-        for _ in range(len(users)):
-            self.transport.write(json.dump(data))
 
