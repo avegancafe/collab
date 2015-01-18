@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 ''' The server for collab.vim '''
 
 import json, argparse
@@ -17,11 +18,11 @@ class React(Protocol):
     ''' protocol for server '''
     def __init__(self, factory):
         self.factory = factory
-        self.state = "GETNAME"
 
     def data_received(self, data):
         ''' handles data '''
         if data['name'] not in USERS:
+            print "New user: %s"%data['name']
             USERS.add(data['name'])
         for _ in range(len(USERS)):
             data_string = json.dumps(data)
@@ -33,6 +34,7 @@ class ReactFactory(Factory):
     def __init__(self):
         self.buff = []
         self.port = 0
+        self.p = React(self)
 
     def initiate(self, port):
         ''' initializes the factory '''

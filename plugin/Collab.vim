@@ -20,9 +20,11 @@ class CollabProtocol(Protocol):
     def send(self, change):
         self.transport.write(change)
     
-    def data_received(self, data_string):
+    def dataReceived(self, data_string):
     	packet = json.loads(data_string)
         data = packet['data']
+        print data
+        print "Name is: %s"%data['name']
         if packet['name'] != Collab.name and 'change_type' in packet.keys():
             if packet['change_type'] == "update_line":
                 vim.current.buffer[packet['data']['line_num']] = packet['data']['updated_line']
@@ -82,6 +84,7 @@ class CollabScope(object):
             return
         port = int(port)
 	addr = str(addr)
+        vim.command('autocmd VimLeave * py CoVim.quit()')
         if not hasattr(self, 'connection'):
             self.addr = addr
             self.port = port
@@ -126,7 +129,7 @@ class CollabScope(object):
         reactor.callFromThread(reactor.stop)
 
     def disconnect(self):
-        if not self.connected:
+        if not self.connection:
             print "You must be connected to disconnect"
         else:
             reactor.callFromThread(self.connection.disconnect)
