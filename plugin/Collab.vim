@@ -31,7 +31,7 @@ class CollabProtocol(Protocol):
         self.fact = fact
     
     def connectionMade(self):
-        print("connected!!!!!")
+        self.transport.write(json.dumps({'name': Collab.name, 'packet_type': 'handshake'}))
 
     def send(self, change):
         self.transport.write(change)
@@ -42,21 +42,25 @@ class CollabProtocol(Protocol):
     	packet = json.loads(data_string)
         data = packet['data']
         if packet['packet_type'] == "message":
-            print packet
+            print "New message!"
             if packet['data']['message_type'] == 'connect_success' and 'buffer' in packet['data']:
-                print "updating buffer from new"
+                packet['data']['buffer'] = to_utf8(packet['data']['buffer'])
                 vim.current.buffer[:] = packet['data']['buffer']
-        else:
+        elif packet['packet_type'] == 'update':
             if packet['change_type'] == "update_line":
-                vim.current.buffer[packet['data']['line_num']] = packet['data']['updated_line']
+                vim.current.buffer[packet['data']['line_num']] = to_utf8(packet['data']['updated_line'])
             elif packet['change_type'] == "add_line":
-                Collab.buff = vim.current.buffer[:packet['data']['line_num']] + \
-                        packet['data']['new_line'] + vim.current.buffer[packet['data']['line_num']:]
+                Collab.buff = vim.current.buffer[:packet['data']['line_num']-1] + \
+                        [to_utf8(packet['data']['prev_line']), to_utf8(packet['data']['new_line'])] + \
+                        vim.current.buffer[packet['data']['line_num']:]
                 vim.current.buffer[:] = Collab.buff
             elif packet['change_type'] == 'remove_line':
                 del vim.current.buffer[packet['data']['line_to_remove']]
             else:
                 print "ERROR ERROR ERROR"
+        elif packet['packet_type'] == 'initial':
+            Collab.buff = to_utf8(data['buffer'])
+            vim.current.buffer[:] = Collab.buff
         vim.command("redraw")
 
 class CollabFactory(ClientFactory):
@@ -85,6 +89,7 @@ class CollabFactory(ClientFactory):
         elif len(cur_buff) > len(Collab.buff):
             data['change_type'] = 'add_line'
             data['data']['new_line'] = to_utf8(cur_buff[cur_line_num])
+            data['data']['prev_line'] = to_utf8(cur_buff[max(0, cur_line_num-1)])
             data['data']['line_num'] = cur_line_num
         else:
             data['change_type'] = 'remove_line'

@@ -21,11 +21,19 @@ class React(Protocol):
 
     def connectionMade(self):
         print "Connection Made"
-        self.transport.write(self.factory.buff)
+        self.transport.write(json.dumps({
+            'packet_type': 'initial',
+            'data': {
+                'buffer': self.factory.buff
+                }
+            }))
 
     def dataReceived(self, data):
         ''' handles data '''
         data = json.loads(data)
+        if 'packet_type' in data and not USERS and data['packet_type'] == 'handshake':
+            USERS[data['name']] = self
+            return
         if 'change_type' in data:
             if data['change_type'] == 'add_line':
                 self.factory.buff = self.factory.buff[:data['data']['line_num']] + \
@@ -57,7 +65,6 @@ class React(Protocol):
         print(d)
         print(data)
 
-        # Send data to everyone but you
         for user in USERS.keys():
             if user != data['name']:
                 data_string = json.dumps(d)
