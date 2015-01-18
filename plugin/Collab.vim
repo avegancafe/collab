@@ -157,6 +157,7 @@ class CollabScope(object):
 
     def quit(self):
         reactor.callFromThread(reactor.stop)
+        vim.command("q!")
 
     def disconnect(self):
         if not self.connection:

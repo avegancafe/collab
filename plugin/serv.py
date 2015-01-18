@@ -5,6 +5,7 @@ import json, argparse
 
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
+from time import sleep
 
 PARSER = argparse.ArgumentParser(description='Start server.')
 PARSER.add_argument('-p', '--persist', action='store_true', default=True,
@@ -39,6 +40,7 @@ class React(Protocol):
                 self.factory.buff = self.factory.buff[:data['data']['line_num']] + \
                         [data['data']['new_line'].encode(),] + self.factory.buff[data['data']['line_num']:]
             elif data['change_type'] == 'update_line':
+                sleep(0.5)
                 self.factory.buff[data['data']['line_num']] = data['data']['updated_line']
             elif data['change_type'] == 'delete_line':
                 del self.factory.buff[data['data']['line_to_remove']]
