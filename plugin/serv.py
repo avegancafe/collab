@@ -7,34 +7,69 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet import reactor
 
 PARSER = argparse.ArgumentParser(description='Start server.')
-PARSER.add_argument('-p', '--persist', action='store_true',
+PARSER.add_argument('-p', '--persist', action='store_true', default=True,
                     help='Keep server running if all users disconnect')
 PARSER.add_argument('port', type=int, nargs='?', default=8555,
                     help='Port number to run on')
 
-USERS = set()
+USERS = {}
 
 class React(Protocol):
     ''' protocol for server '''
     def __init__(self, factory):
         self.factory = factory
 
-    def data_received(self, data):
+    def connectionMade(self):
+        print "Connection Made"
+        self.transport.write(self.factory.buff)
+
+    def dataReceived(self, data):
         ''' handles data '''
+        data = json.loads(data)
+        if 'change_type' in data:
+            if data['change_type'] == 'add_line':
+                self.factory.buff = self.factory.buff[:data['data']['line_num']] + \
+                        [data['data']['new_line'].encode(),] + self.factory.buff[data['data']['line_num']:]
+            elif data['change_type'] == 'update_line':
+                self.factory.buff[data['data']['line_num']] = data['data']['updated_line']
+            elif data['change_type'] == 'delete_line':
+                del self.factory.buff[data['data']['line_to_remove']]
         if data['name'] not in USERS:
+            d =  {
+                "name": data['name'],
+                "packet_type": "message",
+                "data": {
+                    'message_type': 'connect_success',
+                    },
+            }
+
             print "New user: %s"%data['name']
-            USERS.add(data['name'])
-        for _ in range(len(USERS)):
-            data_string = json.dumps(data)
-            self.transport.write(data_string)
+            if USERS:
+                d['data']['buffer'] = self.factory.buff
+            USERS[data['name']] = self
+        else:
+            d = {
+                    "name": data['name'],
+                    "packet_type": "update",
+                    "change_type": data['change_type'],
+                    "data": data['data']
+                } 
+        print(d)
+        print(data)
+
+        # Send data to everyone but you
+        for user in USERS.keys():
+            if user != data['name']:
+                data_string = json.dumps(d)
+                USERS[user].transport.write(data_string)
         return
 
 class ReactFactory(Factory):
     ''' factory for server '''
     def __init__(self):
+        USERS = set()
         self.buff = []
         self.port = 0
-        self.p = React(self)
 
     def initiate(self, port):
         ''' initializes the factory '''
@@ -44,6 +79,7 @@ class ReactFactory(Factory):
         reactor.run()
 
     def buildProtocol(self, addr):
+        print("Building protocol")
         return React(self)
 
 if __name__ == '__main__':

@@ -12,20 +12,41 @@ from threading import Thread
 
 serv_path = vim.eval('expand("<sfile>:h")') + '/serv.py'
 
+def to_utf8(d):
+    if isinstance(d, dict):
+        d2 = {}
+        for key, value in d.iteritems():
+            d2[to_utf8(key)] = to_utf8(value)
+            return d2
+    elif isinstance(d, list):
+        return map(to_utf8, d)
+    elif isinstance(d, unicode):
+        return d.encode('utf-8')
+    else:
+        return d
+
 class CollabProtocol(Protocol):
     ''' Twisted Protocol for Collab '''
     def __init__(self, fact):
         self.fact = fact
+    
+    def connectionMade(self):
+        print("connected!!!!!")
 
     def send(self, change):
         self.transport.write(change)
     
     def dataReceived(self, data_string):
+        print('data received')
+        print(data_string)
     	packet = json.loads(data_string)
         data = packet['data']
-        print data
-        print "Name is: %s"%data['name']
-        if packet['name'] != Collab.name and 'change_type' in packet.keys():
+        if packet['packet_type'] == "message":
+            print packet
+            if packet['data']['message_type'] == 'connect_success' and 'buffer' in packet['data']:
+                print "updating buffer from new"
+                vim.current.buffer[:] = packet['data']['buffer']
+        else:
             if packet['change_type'] == "update_line":
                 vim.current.buffer[packet['data']['line_num']] = packet['data']['updated_line']
             elif packet['change_type'] == "add_line":
@@ -36,7 +57,7 @@ class CollabProtocol(Protocol):
                 del vim.current.buffer[packet['data']['line_to_remove']]
             else:
                 print "ERROR ERROR ERROR"
-            vim.command(":redraw")
+        vim.command("redraw")
 
 class CollabFactory(ClientFactory):
     ''' Twisted Factory for Collab '''
@@ -50,31 +71,26 @@ class CollabFactory(ClientFactory):
     def stop_factory(self):
         self.connected = False
 
-    def update_buf(self):
+    def update_buff(self):
         data = {
-            "data": {
-                "cursor": {
-                    "x": vim.current.window.cursor[1],
-                    "y": vim.current.window.cursor[0]
-                }
-            },
+            "data": {},
             "name": Collab.name
         }
         cur_buff = vim.current.buffer[:]
         cur_line_num = vim.current.window.cursor[0]-1
         if len(cur_buff) == len(Collab.buff):
             data['change_type'] = 'update_line'
-            data['data']['updated_line'] = cur_buff[cur_line_num]
+            data['data']['updated_line'] = to_utf8(cur_buff[cur_line_num])
             data['data']['line_num'] = cur_line_num
         elif len(cur_buff) > len(Collab.buff):
             data['change_type'] = 'add_line'
-            data['data']['new_line'] = cur_buff[cur_line_num]
+            data['data']['new_line'] = to_utf8(cur_buff[cur_line_num])
             data['data']['line_num'] = cur_line_num
         else:
             data['change_type'] = 'remove_line'
             data['data']['line_to_remove'] = cur_line_num + 1
         Collab.buff = cur_buff
-        self.p.send(json.dump(data))
+        self.p.send(json.dumps(data))
 
 class CollabScope(object):
     ''' The scope of the plugin '''
@@ -84,7 +100,6 @@ class CollabScope(object):
             return
         port = int(port)
 	addr = str(addr)
-        vim.command('autocmd VimLeave * py CoVim.quit()')
         if not hasattr(self, 'connection'):
             self.addr = addr
             self.port = port
@@ -108,6 +123,7 @@ class CollabScope(object):
             if arg1 and arg2 and arg3:
                 self.initiate(arg1, arg2, arg3)
 		print 'Connection successfully joined...'
+                Collab.setupWorkspace()
             else:
                 print "You must designate an address, port, and name."
         elif command == "quit":
@@ -133,6 +149,11 @@ class CollabScope(object):
             print "You must be connected to disconnect"
         else:
             reactor.callFromThread(self.connection.disconnect)
+
+    def setupWorkspace(self):
+        vim.command(':autocmd!')
+        vim.command('autocmd CursorMovedI <buffer> py reactor.callFromThread(Collab.factory.update_buff)')
+        vim.command('autocmd VimLeave * py Collab.quit()')
 
 Collab = CollabScope()
 EOF
