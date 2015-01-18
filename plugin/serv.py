@@ -34,7 +34,7 @@ class React(Protocol):
         if 'packet_type' in data and not USERS and data['packet_type'] == 'handshake':
             USERS[data['name']] = self
             return
-        if 'change_type' in data:
+        elif 'change_type' in data:
             if data['change_type'] == 'add_line':
                 self.factory.buff = self.factory.buff[:data['data']['line_num']] + \
                         [data['data']['new_line'].encode(),] + self.factory.buff[data['data']['line_num']:]
