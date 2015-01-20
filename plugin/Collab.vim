@@ -156,8 +156,11 @@ class CollabScope(object):
         self.initiate('localhost', port, name)
 
     def quit(self):
-        reactor.callFromThread(reactor.stop)
-        vim.command("q!")
+    	if self.connection:
+            reactor.callFromThread(reactor.stop)
+            vim.command("q!")
+	else:
+	    print "ERROR: You must be running Collab to quit"
 
     def disconnect(self):
         if not self.connection:
