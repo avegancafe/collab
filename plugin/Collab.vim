@@ -84,6 +84,15 @@ class CollabFactory(ClientFactory):
     def stop_factory(self):
         self.connected = False
 
+    def kill(self):
+        print "Killing server"
+        cmd = json.dumps({'command':'shut_down'})
+        try:
+            self.p.send(cmd)
+            print "Killed"
+        except:
+            print "Not connected to server"
+
     def update_buff(self):
         data = {
             "data": {},
@@ -123,6 +132,7 @@ class CollabScope(object):
             self.connection = reactor.connectTCP(addr, port, self.factory)
             self.react_thread = Thread(target=reactor.run, args=(False,))
             self.react_thread.start()
+            self.setupWorkspace()
         else:
             print "Restart Vim"
 
@@ -137,11 +147,10 @@ class CollabScope(object):
             if arg1 and arg2 and arg3:
                 self.initiate(arg1, arg2, arg3)
 		print 'Connection successfully joined...'
-                Collab.setupWorkspace()
             else:
                 print "You must designate an address, port, and name."
         elif command == "quit":
-            self.quit()
+            reactor.callFromThread(Collab.quit)
         elif command == "disconnect":
             self.disconnect()
         else:
@@ -149,15 +158,23 @@ class CollabScope(object):
             docs for details."
 
     def start_server(self, port, name):
-    	vim.command(':silent execute "!'+CoVimServerPath+\
-        ' '+port+' &>/dev/null &"')
+        #vim.command(':silent execute "!'+serv_path+\
+        #' '+port+' &>/dev/null &"')
+        import os
+        cmd = 'curl -s checkip.dyndns.org | sed -e "s/.*Current IP Address: //" -e "s/<.*$//"'
+        ip = os.popen(cmd)
+        ip = ip.readlines()[0].strip()
+        vim.command(':echo \"' + ip + '\"')
         from time import sleep
         sleep(1)
         self.initiate('localhost', port, name)
 
     def quit(self):
+        self.factory.kill()
         reactor.callFromThread(reactor.stop)
-        vim.command("q!")
+        print "Killed"
+
+        #vim.command("q!")
 
     def disconnect(self):
         if not self.connection:
@@ -168,7 +185,7 @@ class CollabScope(object):
     def setupWorkspace(self):
         vim.command(':autocmd!')
         vim.command('autocmd CursorMovedI <buffer> py reactor.callFromThread(Collab.factory.update_buff)')
-        vim.command('autocmd VimLeave * py Collab.quit()')
+        vim.command('autocmd VimLeavePre * py reactor.callFromThread(Collab.quit)')
 
 Collab = CollabScope()
 EOF

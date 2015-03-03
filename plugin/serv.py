@@ -32,7 +32,12 @@ class React(Protocol):
     def dataReceived(self, data):
         ''' handles data '''
         data = json.loads(data)
-        if 'packet_type' in data and not USERS and data['packet_type'] == 'handshake':
+        print(data)
+        if 'command' in data and data.get('command', '') == 'shut_down':
+            print("Shutting down")
+            reactor.stop()
+            return
+        elif 'packet_type' in data and not USERS and data['packet_type'] == 'handshake':
             USERS[data['name']] = self
             return
         elif 'change_type' in data:
