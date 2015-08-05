@@ -158,13 +158,12 @@ class CollabScope(object):
             docs for details."
 
     def start_server(self, port, name):
-        #vim.command(':silent execute "!'+serv_path+\
-        #' '+port+' &>/dev/null &"')
+        vim.command('silent execute "!python '+serv_path+' '+port+' &>/dev/null &" | redraw')
         import os
         cmd = 'curl -s checkip.dyndns.org | sed -e "s/.*Current IP Address: //" -e "s/<.*$//"'
         ip = os.popen(cmd)
         ip = ip.readlines()[0].strip()
-        vim.command(':echo \"' + ip + '\"')
+        vim.command(':echom \"' + ip + '\"')
         from time import sleep
         sleep(1)
         self.initiate('localhost', port, name)

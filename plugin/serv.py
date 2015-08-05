@@ -68,8 +68,6 @@ class React(Protocol):
                     "change_type": data['change_type'],
                     "data": data['data']
                 } 
-        # print(d)
-	# print(data)
 
         for user in USERS.keys():
             if user != data['name']:
