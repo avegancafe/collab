@@ -4,6 +4,7 @@ python << EOF
 
 import vim, json
 import sys
+from time import sleep
 sys.path.append("/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/")
 
 from twisted.internet.protocol import ClientFactory, Protocol
@@ -43,12 +44,9 @@ class CollabProtocol(Protocol):
         self.transport.write(change)
     
     def dataReceived(self, data_string):
-        print('data received')
-        print(data_string)
     	packet = json.loads(clean_string(data_string))
         data = packet['data']
         if packet['packet_type'] == "message":
-            print "New message!"
             if packet['data']['message_type'] == 'connect_success' and 'buffer' in packet['data']:
                 packet['data']['buffer'] = to_utf8(packet['data']['buffer'])
                 vim.current.buffer[:] = packet['data']['buffer']
@@ -140,7 +138,7 @@ class CollabScope(object):
         if command == "start":
             if arg1 and arg2:
                 self.start_server(arg1, arg2)
-		print 'Connection successful...'
+                print 'Connection successful...'
             else:
                 print "You must designate a port and name."
         elif command == "connect":
@@ -158,15 +156,17 @@ class CollabScope(object):
             docs for details."
 
     def start_server(self, port, name):
-        vim.command('silent execute "!python '+serv_path+' '+port+' &>/dev/null &" | redraw')
+        vim.command('silent execute "!python ' + serv_path + ' ' + port + ' &>/dev/null &" ')
         import os
         cmd = 'curl -s checkip.dyndns.org | sed -e "s/.*Current IP Address: //" -e "s/<.*$//"'
         ip = os.popen(cmd)
-        ip = ip.readlines()[0].strip()
-        vim.command(':echom \"' + ip + '\"')
-        from time import sleep
+        ipLines = ip.readlines()
+        if (len(ipLines) > 0):
+            ip = ipLines[0].strip()
+            vim.command(':echom \"ip: ' + ip + '\"')
         sleep(1)
         self.initiate('localhost', port, name)
+        vim.command("redraw!")
 
     def quit(self):
         self.factory.kill()
@@ -180,6 +180,7 @@ class CollabScope(object):
             print "You must be connected to disconnect"
         else:
             reactor.callFromThread(self.connection.disconnect)
+            Collab = CollabScope()
 
     def setupWorkspace(self):
         vim.command(':autocmd!')
