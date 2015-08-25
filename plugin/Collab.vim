@@ -120,7 +120,7 @@ class CollabScope(object):
             print "You are already connected"
             return
         port = int(port)
-	addr = str(addr)
+        addr = str(addr)
         if not hasattr(self, 'connection'):
             self.addr = addr
             self.port = port
@@ -144,7 +144,7 @@ class CollabScope(object):
         elif command == "connect":
             if arg1 and arg2 and arg3:
                 self.initiate(arg1, arg2, arg3)
-		print 'Connection successfully joined...'
+                print 'Connection successfully joined...'
             else:
                 print "You must designate an address, port, and name."
         elif command == "quit":
@@ -171,9 +171,7 @@ class CollabScope(object):
     def quit(self):
         self.factory.kill()
         reactor.callFromThread(reactor.stop)
-        print "Killed"
-
-        #vim.command("q!")
+        Collab = CollabScope()
 
     def disconnect(self):
         if not self.connection:
