@@ -54,13 +54,14 @@ class CollabProtocol(Protocol):
             if packet['change_type'] == "update_line":
                 vim.current.buffer[packet['data']['line_num']] = to_utf8(packet['data']['updated_line'])
             elif packet['change_type'] == "add_line":
-                cur_col = vim.current.window.cursor[1]
-                Collab.buff = vim.current.buffer[:packet['data']['line_num']-1] + \
-                        [to_utf8(packet['data']['prev_line']), to_utf8(packet['data']['new_line'])] + \
-                        vim.current.buffer[packet['data']['line_num']:]
-                vim.current.buffer[:] = Collab.buff
-                if data['line_num'] < vim.current.window.cursor[0]-1:
-                    vim.current.window.cursor = (vim.current.window.cursor[0]+1,cur_col)
+                if packet['data']['line_num'] != 0:
+                    cur_col = vim.current.window.cursor[1]
+                    Collab.buff = vim.current.buffer[:packet['data']['line_num']-1] + \
+                            [to_utf8(packet['data']['prev_line']), to_utf8(packet['data']['new_line'])] + \
+                            vim.current.buffer[packet['data']['line_num']:]
+                    vim.current.buffer[:] = Collab.buff
+                    if data['line_num'] < vim.current.window.cursor[0]-1:
+                        vim.current.window.cursor = (vim.current.window.cursor[0]+1,cur_col)
             elif packet['change_type'] == 'remove_line':
                 del vim.current.buffer[packet['data']['line_to_remove']]
             else:
