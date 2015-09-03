@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 ''' The server for collab.vim '''
 
 import json, argparse
@@ -37,7 +37,13 @@ class React(Protocol):
             print("Shutting down")
             reactor.stop()
             return
-        elif 'packet_type' in data and not USERS and data['packet_type'] == 'handshake':
+        elif 'command' in data and data.get('command', '') == 'leave':
+            print(USERS)
+            del USERS[data['name']]
+            if len(USERS.keys()) == 0:
+                reactor.stop()
+            return
+        elif 'packet_type' in data and data['packet_type'] == 'handshake':
             USERS[data['name']] = self
             return
         elif 'change_type' in data:
@@ -48,6 +54,9 @@ class React(Protocol):
                 self.factory.buff[data['data']['line_num']] = data['data']['updated_line']
             elif data['change_type'] == 'delete_line':
                 del self.factory.buff[data['data']['line_to_remove']]
+        else:
+            print(data)
+            return
         if data['name'] not in USERS:
             d =  {
                 "name": data['name'],
@@ -58,8 +67,7 @@ class React(Protocol):
             }
 
             print "New user: %s"%data['name']
-            if USERS:
-                d['data']['buffer'] = self.factory.buff
+            d['data']['buffer'] = self.factory.buff
             USERS[data['name']] = self
     	elif 'change_type' in data:
             d = {
@@ -78,7 +86,7 @@ class React(Protocol):
 class ReactFactory(Factory):
     ''' factory for server '''
     def __init__(self):
-        USERS = set()
+        USERS = {}
         self.buff = []
         self.port = 0
 

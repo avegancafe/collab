@@ -82,9 +82,9 @@ class CollabFactory(ClientFactory):
     def stop_factory(self):
         self.connected = False
 
-    def kill(self):
+    def kill(self, name):
         print "Killing server"
-        cmd = json.dumps({'command':'shut_down'})
+        cmd = json.dumps({'command':'leave', 'name': name})
         try:
             self.p.send(cmd)
             print "Killed"
@@ -156,20 +156,15 @@ class CollabScope(object):
             docs for details."
 
     def start_server(self, port, name):
-        vim.command('silent execute "!python ' + serv_path + ' ' + port + ' &>/dev/null &" ')
-        #import os
-        #cmd = 'curl -s checkip.dyndns.org | sed -e "s/.*Current IP Address: //" -e "s/<.*$//"'
-        #ip = os.popen(cmd)
-        #ipLines = ip.readlines()
-        #if (len(ipLines) > 0):
-        #    ip = ipLines[0].strip()
-        #    vim.command(':echom \"ip: ' + ip + '\"')
-        #sleep(1)
+        vim.command('silent exec "!echo python ' + serv_path + ' ' + port + ' > tmp.command; chmod +x tmp.command"')
+        vim.command('silent exec "!open tmp.command"');
+        from time import sleep
+        sleep(1)
         self.initiate('localhost', port, name)
         vim.command("redraw!")
 
     def quit(self):
-        self.factory.kill()
+        self.factory.kill(self.name)
         reactor.callFromThread(reactor.stop)
         Collab = CollabScope()
 
@@ -187,3 +182,4 @@ class CollabScope(object):
 
 Collab = CollabScope()
 EOF
+
