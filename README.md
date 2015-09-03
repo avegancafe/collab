@@ -32,4 +32,4 @@ chmod +x serv.py
 ./serv.py
 ```
 
-This starts the server. You can optionally specify a port number by using `-p=<port>` as an option, but it defaults to port 8555. You can connect to this server as usual with :Collab connect localhost 8555 Kyle, assuming it is on port 8555.
+This starts the server. You can optionally specify a port number by providing a number for the port (ex. `./serv.py 80` starts the server at port 80), but it defaults to port 8555. You can connect to this server as usual with :Collab connect localhost 8555 Kyle, assuming it is on port 8555.
