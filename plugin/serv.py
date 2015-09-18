@@ -8,7 +8,7 @@ from twisted.internet import reactor
 from time import sleep
 
 PARSER = argparse.ArgumentParser(description='Start server.')
-PARSER.add_argument('-p', '--persist', action='store_true', default=True,
+PARSER.add_argument('-p', '--persist', action='store_true', default=False,
                     help='Keep server running if all users disconnect')
 PARSER.add_argument('port', type=int, nargs='?', default=8555,
                     help='Port number to run on')
@@ -33,16 +33,18 @@ class React(Protocol):
         ''' handles data '''
         data = json.loads(data)
         print(data)
-        if 'command' in data and data.get('command', '') == 'shut_down':
-            print("Shutting down")
-            reactor.stop()
-            return
-        elif 'command' in data and data.get('command', '') == 'leave':
-            print(USERS)
-            del USERS[data['name']]
-            if len(USERS.keys()) == 0:
+        if 'command' in data:
+            if data['command'] == 'shut_down':
+                print("Shutting down")
                 reactor.stop()
-            return
+                return
+            if data['command'] == 'leave':
+                del USERS[data['name']]
+                if len(USERS.keys()) == 0:
+                    reactor.stop()
+                return
+            #if data['command'] == 'who':
+
         elif 'packet_type' in data and data['packet_type'] == 'handshake':
             USERS[data['name']] = self
             return
